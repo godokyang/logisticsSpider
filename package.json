@@ -1,0 +1,27 @@
+{
+  "name": "logisticsspider",
+  "version": "1.0.0",
+  "description": "微商物流快递爬虫",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/godokyang/logisticsSpider.git"
+  },
+  "author": "godokyang",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/godokyang/logisticsSpider/issues"
+  },
+  "homepage": "https://github.com/godokyang/logisticsSpider#readme",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.3",
+    "fs": "0.0.1-security",
+    "http": "0.0.0",
+    "koa": "^2.10.0",
+    "koa-bodyparser": "^3.2.0",
+    "request": "^2.88.0"
+  }
+}
