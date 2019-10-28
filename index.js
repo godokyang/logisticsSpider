@@ -1,14 +1,22 @@
 const request = require('request');
 const fs = require('fs');
 const cheerio = require('cheerio')
+const path = require('path')
 const Koa = require('koa')
+const readline = require('readline');
 const app = new Koa()
 const bodyParser = require('koa-bodyparser')
+const static = require('koa-static')
 
 const port = 3001
-let mainDNS = 'http://diechu.dh.cx/'
+// let mainDNS = 'http://diechu.dh.cx/'
+// 静态资源目录对于相对入口文件index.js的路径
+const staticPath = './static'
 
 app.use(bodyParser())
+app.use(static(
+  path.join(__dirname, staticPath)
+))
 
 app.use(async (ctx) => {
   if (ctx.url === '/search' && ctx.method === 'GET') {
@@ -23,25 +31,56 @@ app.use(async (ctx) => {
 
   if (ctx.url === '/search' && ctx.method === 'POST') {
     let postData = ctx.request.body
-    await getLogistics()
     console.log('====================================');
     console.log(postData);
     console.log('====================================');
+    let logisticsList = await readFileToArr('config.json')
+    let responseObj = {
+      count: 0,
+      head: [],
+      body: []
+    }
+
+    for (let index = 0; index < logisticsList.length; index++) {
+      const element = logisticsList[index];
+      let uri = element.replace(/\s*/g,"");
+      if (!uri) {
+        return
+      }
+      let res = await getLogistics(uri, postData.searchText)
+      if (res.status) {
+        responseObj.count++
+        responseObj.head.push(res.head)
+        responseObj.head.push(res.body)
+      }
+    }
+    console.log('==============222222======================');
+    console.log(responseObj);
+    console.log('====================================');
+    if (responseObj.status) {
+      ctx.response.body = Object.assign({ statusCode: 200 }, responseObj)
+    } else {
+      ctx.response.body = { statusCode: 400 }
+    }
   }
 
 })
 
-async function getLogistics() {
+async function getLogistics(mainDNS,searchText) {
+  console.log(mainDNS, searchText)
   let mainRes = await promiseRequest({
     url: mainDNS,
     method: "POST",
     form: {
-      query_str: '13996897837',
+      query_str: searchText,
       action: 'home_query'
     }
   })
 
-  if (mainRes.statusCode !== 200) {
+  console.log('====================================');
+  console.log(mainRes.body);
+  console.log('====================================');
+  if (mainRes.statusCode !== 200 || !JSON.parse(mainRes.body) || JSON.parse(mainRes.body).data.length === 0) {
     return {
       status: false
     }
@@ -69,6 +108,12 @@ async function getLogistics() {
     }
   })
 
+  if (!noList[0]) {
+    return {
+      status: false
+    }
+  }
+
   let endPost = {
     url: "http://apis.dh.cx/query/json",
     method: 'POST',
@@ -77,29 +122,65 @@ async function getLogistics() {
       company: 'unknown'
     }
   }
+
   let endRes = await promiseRequest(endPost)
   return {
     status: true,
     head: infoHtml,
-    body: endRes.body
+    body: JSON.parse(endRes.body)
   }
 }
 
 function promiseRequest(reqParams, timeout = 100) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      request(reqParams, function (error, response, body) {
-        if (error || response.statusCode !== 200) {
-          reject({
-            error: error,
-            response: response
-          })
-          return
-        }
-        resolve(response)
-      })
+      try {
+        console.log('url:  ',reqParams)
+        request(reqParams, function (error, response, body) {
+          if (error || response.statusCode !== 200) {
+            reject({
+              error: error,
+              response: response
+            })
+            return
+          }
+          resolve(response)
+        })
+      } catch (error) {
+        resolve(error)
+      }
+
     }, timeout);
   });
+}
+
+/*
+* 按行读取文件内容
+* 返回：字符串数组
+* 参数：fReadName:文件名路径
+*      callback:回调函数
+* */
+function readFileToArr(fReadName) {
+  return new Promise((resolve, reject) => {
+    try {
+      var fRead = fs.createReadStream(fReadName);
+      var objReadline = readline.createInterface({
+        input: fRead
+      });
+      var arr = new Array();
+      objReadline.on('line', function (line) {
+        arr.push(line);
+        //console.log('line:'+ line);
+      });
+      objReadline.on('close', function () {
+        // console.log(arr);
+        resolve(arr);
+      });
+    } catch (error) {
+      reject(error)
+    }
+
+  })
 }
 
 app.listen(port, () => {
