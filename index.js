@@ -11,6 +11,8 @@ const static = require('koa-static')
 const port = 3001
 // let mainDNS = 'http://diechu.dh.cx/'
 // 静态资源目录对于相对入口文件index.js的路径
+// 13668126060
+// 1399689837
 const staticPath = './static'
 
 app.use(bodyParser())
@@ -22,7 +24,6 @@ app.use(async (ctx) => {
   if (ctx.url === '/search' && ctx.method === 'GET') {
     let html = fs.readFileSync('search.html', 'UTF-8')
     ctx.body = html
-    // return html
   }
 
   if (ctx.url === '/data' && ctx.method === 'GET') {
@@ -43,21 +44,19 @@ app.use(async (ctx) => {
 
     for (let index = 0; index < logisticsList.length; index++) {
       const element = logisticsList[index];
-      let uri = element.replace(/\s*/g,"");
+      let uri = element.replace(/\s*/g, "");
       if (!uri) {
         return
       }
       let res = await getLogistics(uri, postData.searchText)
       if (res.status) {
-        responseObj.count++
-        responseObj.head.push(res.head)
-        responseObj.head.push(res.body)
+        responseObj.head = responseObj.head.concat(res.head)
+        responseObj.body = responseObj.body.concat(res.body)
+        responseObj.count = responseObj.body.length
       }
     }
-    console.log('==============222222======================');
-    console.log(responseObj);
-    console.log('====================================');
-    if (responseObj.status) {
+
+    if (responseObj.count) {
       ctx.response.body = Object.assign({ statusCode: 200 }, responseObj)
     } else {
       ctx.response.body = { statusCode: 400 }
@@ -66,27 +65,32 @@ app.use(async (ctx) => {
 
 })
 
-async function getLogistics(mainDNS,searchText) {
+async function getLogistics(mainDNS, searchText) {
   console.log(mainDNS, searchText)
-  let mainRes = await promiseRequest({
-    url: mainDNS,
-    method: "POST",
-    form: {
-      query_str: searchText,
-      action: 'home_query'
-    }
-  })
+  let courierURI = `${mainDNS}${searchText}`
+  let keyStr = '.dh.cx/'
+  if (mainDNS.lastIndexOf(keyStr) === (mainDNS.length - keyStr.length)) {
+    let mainRes = await promiseRequest({
+      url: mainDNS,
+      method: "POST",
+      form: {
+        query_str: searchText,
+        action: 'home_query'
+      },
+      followRedirect: false,
+      followAllRedirects: true
+    })
 
-  console.log('====================================');
-  console.log(mainRes.body);
-  console.log('====================================');
-  if (mainRes.statusCode !== 200 || !JSON.parse(mainRes.body) || JSON.parse(mainRes.body).data.length === 0) {
-    return {
-      status: false
+    if (mainRes.statusCode !== 200 || !JSON.parse(mainRes.body) || JSON.parse(mainRes.body).data.length === 0) {
+      return {
+        status: false
+      }
     }
+    courierURI = JSON.parse(mainRes.body).data[0]
   }
 
-  let courierRes = await promiseRequest(JSON.parse(mainRes.body).data[0])
+
+  let courierRes = await promiseRequest(courierURI)
   if (courierRes.statusCode !== 200) {
     return {
       status: false
@@ -97,45 +101,80 @@ async function getLogistics(mainDNS,searchText) {
     decodeEntities: false
   });
 
-  let infoHtml = $('.panel-body').html()
   let noList = []
+  let resObj = {
+    status: false,
+    head: [],
+    body: []
+  }
   // 快递单号所在节点集合
-  $('.panel-body').find('li').each(function (i, ele) {
-    if ($(ele).text().indexOf('快递单号') !== -1) {
-      let cp = $(ele).clone()
-      cp.find(':nth-child(n)').remove()
-      noList.push(cp.text().replace(/[^0-9]/ig, ""))
-    }
-  })
-
-  if (!noList[0]) {
+  resObj.head.push($('.panel-body').html())
+  if ($('.panel-box').text().indexOf('多条记录') !== -1) {
+    $('.panel-box').find('a').each(async (i, ele) => {
+      if ($(ele).text().indexOf('单号') !== -1) {
+        let cp = $(ele).clone().text()
+        let strArr = cp.split('单号')
+        let no = strArr[strArr.length - 1].replace(/[^0-9]/ig, "");
+        noList.push(no)
+        if (i > 0) {
+          let headerRes = await promiseRequest(`${courierURI}/${i}`)
+          if (headerRes.statusCode === 200) {
+            let inner = cheerio.load(headerRes.body, {
+              normalizeWhitespace: true,
+              decodeEntities: false
+            })
+            resObj.head.push(inner('.panel-body').html())
+          } else {
+            resObj.head.push('<view>非有效数据</view>')
+          }
+        }
+      }
+    })
+  } else {
+    $('.panel-body').find('li').each(function (i, ele) {
+      if ($(ele).text().indexOf('单号') !== -1) {
+        let cp = $(ele).clone()
+        cp.find(':nth-child(n)').remove()
+        noList.push(cp.text().replace(/[^0-9]/ig, ""))
+      }
+    })
+  }
+  resObj.head = [...new Set(resObj.head)]
+  noList = [...new Set(noList)]
+  if (noList.length === 0) {
     return {
       status: false
     }
   }
 
-  let endPost = {
-    url: "http://apis.dh.cx/query/json",
-    method: 'POST',
-    form: {
-      no: noList[0],
-      company: 'unknown'
+  for (let index = 0; index < noList.length; index++) {
+    const element = noList[index];
+    if (!element) {
+      continue
+    }
+    let endPost = {
+      url: "http://apis.dh.cx/query/json",
+      method: 'POST',
+      form: {
+        no: element,
+        company: 'unknown'
+      }
+    }
+    let endRes = await promiseRequest(endPost)
+    if (endRes.statusCode === 200) {
+      resObj.status = true
+      resObj.body.push(JSON.parse(endRes.body))
     }
   }
-
-  let endRes = await promiseRequest(endPost)
-  return {
-    status: true,
-    head: infoHtml,
-    body: JSON.parse(endRes.body)
-  }
+  
+  return resObj
 }
 
 function promiseRequest(reqParams, timeout = 100) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       try {
-        console.log('url:  ',reqParams)
+        // console.log('url:  ',reqParams)
         request(reqParams, function (error, response, body) {
           if (error || response.statusCode !== 200) {
             reject({

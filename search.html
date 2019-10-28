@@ -192,7 +192,7 @@
     <img class="icon" src="./img/headIcon.png" alt="🌼🌼🌼🌼">
     <h2>🌼晨安&花🌼物流查询</h2>
     <div class="check-box">
-      <input type="text" placeholder="请输入手机号/快递单号" id="content" />
+      <input value="13668126060" type="text" placeholder="请输入手机号/快递单号" id="content" />
       <button id='checkBtn'>查查看</button>
     </div>
     <div id="info-shower"></div>
@@ -229,13 +229,16 @@
                 return
               }
 
-              if (res.status) {
-                for (let index = 0; index < count; index++) {
-                  const head = res.head[index];
-                  const body = res.body
-                  shower.html(head)
+              if (res.count) {
+                for (let index = 0; index < res.count; index++) {
+                  let head = res.head[index];
+                  let body = res.body[index];
+                  let headNote = document.createElement('div')
+                  headNote.innerHTML = head
+                  shower[0].appendChild(headNote)
+
                   let a = document.createElement('div')
-                  a.innerHTML = '<a id="company" href="' + res.body.company.website + '">' + res.body.company.fullname + '</a>'
+                  a.innerHTML = '<a id="company" href="' + body.company.website + '">' + body.company.fullname + '</a>'
                   shower[0].appendChild(a)
                   let table = '<table class="table"><tbody>'
                   body.data.data.forEach((element, index) => {
@@ -247,6 +250,9 @@
                   tableNode.innerHTML = table
                   shower[0].appendChild(tableNode)
                 }
+                $('body').height('auto')
+              } else {
+                $('body').height('100vh')
               }
             }
           }
