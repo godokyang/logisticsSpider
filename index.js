@@ -18,7 +18,8 @@ const staticPath = './static'
 
 app.use(bodyParser())
 app.use(static(
-  path.join(__dirname, staticPath)
+  //path.join(__dirname, staticPath)
+	path.join(`${__dirname}/search`, staticPath)
 ))
 app.use(cors({
   origin: function (ctx) {
