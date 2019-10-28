@@ -7,6 +7,7 @@ const readline = require('readline');
 const app = new Koa()
 const bodyParser = require('koa-bodyparser')
 const static = require('koa-static')
+const cors = require('koa2-cors')
 
 const port = 3001
 // let mainDNS = 'http://diechu.dh.cx/'
@@ -19,6 +20,16 @@ app.use(bodyParser())
 app.use(static(
   path.join(__dirname, staticPath)
 ))
+app.use(cors({
+  origin: function (ctx) {
+    return "*";
+  },
+  exposeHeaders: ['WWW-Authenticate', 'Server-Authorization'],
+  maxAge: 5,
+  credentials: true,
+  allowMethods: ['GET', 'POST', 'DELETE'], //设置允许的HTTP请求类型
+  allowHeaders: ['Content-Type', 'Authorization', 'Accept'],
+}))
 
 app.use(async (ctx) => {
   if (ctx.url === '/search' && ctx.method === 'GET') {
@@ -166,7 +177,7 @@ async function getLogistics(mainDNS, searchText) {
       resObj.body.push(JSON.parse(endRes.body))
     }
   }
-  
+
   return resObj
 }
 
