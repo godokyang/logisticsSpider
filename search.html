@@ -226,6 +226,7 @@
               console.log('====================================');
               if (res.statusCode !== 200) {
                 shower.text('没有数据哦~')
+                $('body').height('100vh')
                 return
               }
 
