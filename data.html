@@ -1,17 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>🌼晨安&花🌼物流网站编辑</title>
+  <style type="text/css">
+    html,
+    body {
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: #5079b7;
+    }
+
+    .area {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+    }
+
+    button {
+      margin: 30px;
+      height: 40px;
+      width: 100px;
+      border-radius: 7px;
+      color: white;
+      font-size: 16px;
+      background-color: #35c9eadb;
+    }
+
+    select {
+      height: 40px;
+      width: 280px;
+    }
+
+    input {
+      height: 40px;
+      min-width: 280px;
+      border-radius: 7px;
+      font-size: 15px;
+    }
+
+    h3 {
+      color: white;
+    }
+  </style>
 </head>
+
 <body>
-  <h1>请输入您的信息</h1>
-  <form action="" method="post">
-    <input type="text" placeholder="请输入手机号/快递单号" name='searchInfo'/>
-    <button>提交</button>
-  </form>
-  <div class="infoShower" ></div>
+  <div class="root">
+    <h3>🌼晨安&花🌼物流编辑</h3>
+    <div class="area">
+      <div class="infoShower">
+      </div>
+      <button onclick="remove()">删除</button>
+    </div>
+    <div class="area">
+      <input type="text" id="content" placeholder="安安可以在这里输入，然后添加就好了" />
+      <button onclick="add()">添加</button>
+    </div>
+  </div>
+  <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+  <script type="text/javascript">
+    $(document).ready(function () {
+      $.ajax(
+        {
+          url: 'http://search.godokyang.top/getlist',
+          method: 'GET',
+          success: (res) => {
+            console.log(res)
+            $('.infoShower').html(res.data)
+          },
+          fail: function () {
+            alert('失败了，安安再试试吧~')
+          }
+        }
+      )
+    })
+
+    function add() {
+      let text = $('#content')[0].value;
+      if (!text) {
+        alert('安安不要调皮了，空的不加~')
+        return
+      }
+      $.ajax(
+        {
+          url: 'http://search.godokyang.top/add',
+          method: 'PUT',
+          data: {
+            addtext: text
+          },
+          success: (res) => {
+            console.log(res.data)
+            alert('添加成功~')
+            $('.infoShower').html(res.data)
+            $('#content')[0].value = ""
+          },
+          fail: function () {
+            alert('失败了，安安再试试吧~')
+          }
+        }
+      )
+    }
+
+    function remove() {
+      let text = $('#selector').find("option:selected").text();
+      $.ajax(
+        {
+          url: 'http://search.godokyang.top/remove',
+          method: 'DELETE',
+          data: {
+            removetext: text
+          },
+          success: (res) => {
+            alert('删除成功~')
+            $('.infoShower').html(res.data)
+            $('#content')[0].value = ""
+          },
+          fail: function () {
+            alert('失败了，安安再试试吧~')
+          }
+        }
+      )
+    }
+  </script>
 </body>
+
 </html>

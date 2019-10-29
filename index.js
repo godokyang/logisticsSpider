@@ -28,7 +28,7 @@ app.use(cors({
   exposeHeaders: ['WWW-Authenticate', 'Server-Authorization'],
   maxAge: 5,
   credentials: true,
-  allowMethods: ['GET', 'POST', 'DELETE'], //设置允许的HTTP请求类型
+  allowMethods: ['GET', 'POST', 'DELETE', 'PUT'], //设置允许的HTTP请求类型
   allowHeaders: ['Content-Type', 'Authorization', 'Accept'],
 }))
 
@@ -38,8 +38,43 @@ app.use(async (ctx) => {
     ctx.body = html
   }
 
-  if (ctx.url === '/data' && ctx.method === 'GET') {
+  if (ctx.url === '/getlist' && ctx.method === 'GET') {
+    ctx.response.body = {
+      statusCode: 200,
+      data: await returnUriList()
+    }
+  }
 
+  if (ctx.url === '/add' && ctx.method === 'PUT') {
+    let postData = ctx.request.body
+    let logisticsList = await readFileToArr('config.json')
+    logisticsList.push(postData.addtext)
+    fs.appendFileSync('config.json', `\n${postData.addtext}`)
+    ctx.response.body = {
+      statusCode: 200,
+      data: await returnUriList()
+    }
+  }
+
+  if (ctx.url === '/remove' && ctx.method === 'DELETE') {
+    let logisticsList = await readFileToArr('config.json')
+    let postData = ctx.request.body
+    let str = ''
+    for (let index = 0; index < logisticsList.length; index++) {
+      const element = logisticsList[index];
+      if (element === postData.removetext || !element.replace(/\s*/g, "")) {
+        continue
+      }
+      if (str) {
+        str += '\n'
+      }
+      str += element
+    }
+    fs.writeFileSync('config.json', str);
+    ctx.response.body = {
+      statusCode: 200,
+      data: await returnUriList()
+    }
   }
 
   if (ctx.url === '/search' && ctx.method === 'POST') {
@@ -76,6 +111,17 @@ app.use(async (ctx) => {
   }
 
 })
+
+async function returnUriList(list) {
+  let logisticsList = list ? list : await readFileToArr('config.json')
+  let oHtml = '<select id="selector">'
+  for (let index = 0; index < logisticsList.length; index++) {
+    const element = logisticsList[index];
+    oHtml += `<option ${index === 0 ? 'selected' : ''}>${element}</option>`
+  }
+  oHtml += '</select>'
+  return oHtml
+}
 
 async function getLogistics(mainDNS, searchText) {
   console.log(mainDNS, searchText)
@@ -214,11 +260,11 @@ function promiseRequest(reqParams, timeout = 100) {
 function readFileToArr(fReadName) {
   return new Promise((resolve, reject) => {
     try {
-      var fRead = fs.createReadStream(fReadName);
-      var objReadline = readline.createInterface({
+      let fRead = fs.createReadStream(fReadName);
+      let objReadline = readline.createInterface({
         input: fRead
       });
-      var arr = new Array();
+      let arr = new Array();
       objReadline.on('line', function (line) {
         arr.push(line);
         //console.log('line:'+ line);
@@ -227,6 +273,7 @@ function readFileToArr(fReadName) {
         // console.log(arr);
         resolve(arr);
       });
+      objReadline = null
     } catch (error) {
       reject(error)
     }
