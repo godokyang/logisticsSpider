@@ -38,6 +38,11 @@ app.use(async (ctx) => {
     ctx.body = html
   }
 
+  if (ctx.url === '/back' && ctx.method === 'GET') {
+    let html = fs.readFileSync('data.html', 'UTF-8')
+    ctx.body = html
+  }
+
   if (ctx.url === '/getlist' && ctx.method === 'GET') {
     ctx.response.body = {
       statusCode: 200,
