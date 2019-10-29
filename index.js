@@ -19,8 +19,7 @@ const staticPath = './static'
 app.use(bodyParser())
 app.use(static(
   //path.join(__dirname, staticPath)
-  path.join(`${__dirname}/search`, staticPath),
-  {proxy: '/search'}
+  path.join(`${__dirname}`, staticPath)
 ))
 app.use(cors({
   origin: function (ctx) {
@@ -34,7 +33,7 @@ app.use(cors({
 }))
 
 app.use(async (ctx) => {
-  if (ctx.url === '/search' && ctx.method === 'GET') {
+  if (ctx.url === '/' && ctx.method === 'GET') {
     let html = fs.readFileSync('search.html', 'UTF-8')
     ctx.body = html
   }
