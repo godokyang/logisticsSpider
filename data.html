@@ -83,7 +83,8 @@
     $(document).ready(function () {
       $.ajax(
         {
-          url: 'http://search.godokyang.top/getlist',
+          // url: 'http://search.godokyang.top/getlist',
+          url: 'http://localhost:3001/getlist',
           method: 'GET',
           success: (res) => {
             console.log(res)
@@ -104,7 +105,8 @@
       }
       $.ajax(
         {
-          url: 'http://search.godokyang.top/add',
+          // url: 'http://search.godokyang.top/add',
+          url: 'http://localhost:3001/add',
           method: 'PUT',
           data: {
             addtext: text
@@ -126,7 +128,8 @@
       let text = $('#selector').find("option:selected").text();
       $.ajax(
         {
-          url: 'http://search.godokyang.top/remove',
+          // url: 'http://search.godokyang.top/remove',
+          url: 'http://localhost:3001/remove',
           method: 'DELETE',
           data: {
             removetext: text
