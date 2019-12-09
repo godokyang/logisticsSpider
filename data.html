@@ -83,8 +83,8 @@
     $(document).ready(function () {
       $.ajax(
         {
-          // url: 'http://search.godokyang.top/getlist',
-          url: 'http://localhost:3001/getlist',
+          url: 'http://182.61.16.253/getlist',
+          // url: 'http://localhost:3001/getlist',
           method: 'GET',
           success: (res) => {
             console.log(res)
@@ -105,8 +105,8 @@
       }
       $.ajax(
         {
-          // url: 'http://search.godokyang.top/add',
-          url: 'http://localhost:3001/add',
+          url: 'http://182.61.16.253/add',
+          // url: 'http://localhost:3001/add',
           method: 'PUT',
           data: {
             addtext: text
