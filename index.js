@@ -33,7 +33,8 @@ app.use(cors({
 }))
 
 app.use(async (ctx) => {
-  if (ctx.url === '/' && ctx.method === 'GET') {
+  let reg = new RegExp(/^\/\?/)
+  if (reg.test(ctx.url) && ctx.method === 'GET') {
     let html = fs.readFileSync('search.html', 'UTF-8')
     ctx.body = html
   }
