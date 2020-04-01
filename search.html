@@ -193,7 +193,7 @@
     <img class="icon" src="./img/headIcon.png" alt="🌼🌼🌼🌼">
     <h2>🌼晨安&花🌼物流查询</h2>
     <div class="check-box">
-      <input value="" type="text" placeholder="请输入手机号/快递单号" id="content" />
+      <input value="13609431009" type="text" placeholder="请输入手机号/快递单号" id="content" />
       <button id='checkBtn'>查查看</button>
     </div>
     <div id="info-shower"></div>
@@ -242,14 +242,16 @@
                   a.innerHTML = '<a id="company" href="' + body.company.website + '">' + body.company.fullname + '</a>'
                   shower[0].appendChild(a)
                   let table = '<table class="table"><tbody>'
-                  body.data.data.forEach((element, index) => {
-                    let info = index === 0 ? 'class="info"' : ''
-                    table += '<tr ' + info + '><td>' + element.context + '<br>' + element.year + '-' + element.day + '-' + element.time + '<span>' + element.diff + '</span></td></tr>'
-                  });
-                  table += '</tbody></table>'
-                  let tableNode = document.createElement('div')
-                  tableNode.innerHTML = table
-                  shower[0].appendChild(tableNode)
+                  if (body.data && body.data.data) {
+                    body.data.data.forEach((element, index) => {
+                      let info = index === 0 ? 'class="info"' : ''
+                      table += '<tr ' + info + '><td>' + element.context + '<br>' + element.year + '-' + element.day + '-' + element.time + '<span>' + element.diff + '</span></td></tr>'
+                    });
+                    table += '</tbody></table>'
+                    let tableNode = document.createElement('div')
+                    tableNode.innerHTML = table
+                    shower[0].appendChild(tableNode)
+                  }
                 }
                 $('body').height('auto')
               } else {
